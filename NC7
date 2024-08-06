@@ -1,0 +1,142 @@
+local player = game.Players.LocalPlayer
+local starterGui = game:GetService("StarterGui")
+local tweenService = game:GetService("TweenService")
+
+-- Function to show custom message
+local function showCustomMessage()
+    starterGui:SetCore("SendNotification", {
+        Title = "Credit",  -- Change the title to "Credit"
+        Text = "Made By (NC7 | FOR HACKS) Discord",
+        Duration = 5  -- Duration of the notification in seconds
+    })
+end
+
+-- Function to create UI
+local function createUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "SpeedControlUI"
+    screenGui.Parent = player.PlayerGui
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0.1, 0, 0.1, 0)  -- Reduced size of the frame
+    frame.Position = UDim2.new(0, 0, 0, 0)
+    frame.BackgroundColor3 = Color3.new(0, 0, 0)
+    frame.BackgroundTransparency = 0.2  -- Set transparency to 80%
+    frame.Active = true
+    frame.Draggable = true
+    frame.Parent = screenGui
+
+    local speedButton = Instance.new("Frame")
+    speedButton.Size = UDim2.new(1, 0, 1, 0)
+    speedButton.BackgroundColor3 = Color3.new(0, 0, 0)
+    speedButton.BackgroundTransparency = 0.2  -- Match transparency with parent frame
+    speedButton.Parent = frame
+
+    local increaseSpeedButton = Instance.new("TextButton")
+    increaseSpeedButton.Text = "+"
+    increaseSpeedButton.Size = UDim2.new(0.5, 0, 1, 0)
+    increaseSpeedButton.Position = UDim2.new(0, 0, 0, 0)
+    increaseSpeedButton.TextSize = 14  -- Reduced text size
+    increaseSpeedButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+    increaseSpeedButton.BackgroundTransparency = 0.2  -- Set transparency
+    increaseSpeedButton.TextColor3 = Color3.new(1, 1, 1)
+    increaseSpeedButton.Parent = speedButton
+
+    local decreaseSpeedButton = Instance.new("TextButton")
+    decreaseSpeedButton.Text = "-"
+    decreaseSpeedButton.Size = UDim2.new(0.5, 0, 1, 0)
+    decreaseSpeedButton.Position = UDim2.new(0.5, 0, 0, 0)
+    decreaseSpeedButton.TextSize = 14  -- Reduced text size
+    decreaseSpeedButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+    decreaseSpeedButton.BackgroundTransparency = 0.2  -- Set transparency
+    decreaseSpeedButton.TextColor3 = Color3.new(1, 1, 1)
+    decreaseSpeedButton.Parent = speedButton
+
+    -- Function to create shake animation for button
+    local function createButtonShakeTween(button)
+        local tweenInfo = TweenInfo.new(
+            0.1,  -- Duration of the animation
+            Enum.EasingStyle.Linear,  -- Easing style of the animation
+            Enum.EasingDirection.InOut,  -- Easing direction of the animation
+            0,  -- Number of times to repeat
+            false,  -- Reverse the animation
+            0  -- Delay before the animation starts
+        )
+
+        local originalPosition = button.Position
+        local shakeOffset = 5  -- Amount of shake offset
+
+        local goal1 = {Position = originalPosition + UDim2.new(0, shakeOffset, 0, 0)}
+        local goal2 = {Position = originalPosition - UDim2.new(0, shakeOffset, 0, 0)}
+        local goal3 = {Position = originalPosition}  -- Return to original position
+
+        local tween1 = tweenService:Create(button, tweenInfo, goal1)
+        local tween2 = tweenService:Create(button, tweenInfo, goal2)
+        local tween3 = tweenService:Create(button, tweenInfo, goal3)
+
+        return {tween1, tween2, tween3}
+    end
+
+    -- Function to handle button click with shake animation
+    local function onButtonClick(button)
+        local tweens = createButtonShakeTween(button)
+        tweens[1]:Play()
+        tweens[1].Completed:Connect(function()
+            tweens[2]:Play()
+            tweens[2].Completed:Connect(function()
+                tweens[3]:Play()
+            end)
+        end)
+    end
+
+    local function changeSpeed(increase)
+        local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local changeAmount = increase and 10 or -10
+            humanoid.WalkSpeed = math.clamp(humanoid.WalkSpeed + changeAmount, 0, 550)  -- Set maximum speed to 550
+            print("تم تغيير سرعة اللاعب إلى: " .. humanoid.WalkSpeed)
+        else
+            print("لا يوجد Humanoid في الشخصية")
+        end
+    end
+
+    increaseSpeedButton.MouseButton1Click:Connect(function() 
+        onButtonClick(increaseSpeedButton)
+        changeSpeed(true)
+    end)
+    decreaseSpeedButton.MouseButton1Click:Connect(function() 
+        onButtonClick(decreaseSpeedButton)
+        changeSpeed(false)
+    end)
+end
+
+-- Function to handle character setup
+local function setupCharacter(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    humanoid.WalkSpeed = 16
+    humanoid.JumpPower = 50
+    createUI()
+end
+
+-- Function to handle character added event
+local function onCharacterAdded(character)
+    -- Ensure no old UI is present
+    local existingUI = player.PlayerGui:FindFirstChild("SpeedControlUI")
+    if existingUI then
+        existingUI:Destroy()
+    end
+
+    -- Setup the character
+    setupCharacter(character)
+end
+
+-- Connect the function to the CharacterAdded event
+player.CharacterAdded:Connect(onCharacterAdded)
+
+-- Create UI if character is already present
+if player.Character then
+    onCharacterAdded(player.Character)
+end
+
+-- Show custom message when script runs
+showCustomMessage()
